@@ -1,0 +1,23 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom Math Input Styles */
+.math-input-container {
+  min-height: 60px;
+  padding: 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  background-color: white;
+}
+
+/* Animasi kursor */
+@keyframes math-cursor-blink {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
+}
+
+.math-cursor {
+  border-right: 2px solid #3b82f6;
+  animation: math-cursor-blink 1s step-end infinite;
+}
