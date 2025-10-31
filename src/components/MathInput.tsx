@@ -7,35 +7,41 @@ interface MathInputProps {
 }
 
 const MathInput = ({ value, onChange }: MathInputProps) => {
-  const mfRef = useRef<MathfieldElement>();
   const containerRef = useRef<HTMLDivElement>(null);
+  const mathfieldRef = useRef<MathfieldElement | null>(null);
+  const onChangeRef = useRef(onChange);
+  const initialValueRef = useRef(value);
 
   useEffect(() => {
-    // Inisialisasi mathfield
-    const mf = new MathfieldElement({
+    onChangeRef.current = onChange;
+  }, [onChange]);
+
+  useEffect(() => {
+    const mathfield = new MathfieldElement({
       virtualKeyboardMode: 'onfocus',
       virtualKeyboards: 'numeric symbols',
       smartFence: true,
       smartMode: true,
     });
 
-    mf.value = value;
-    mf.addEventListener('input', (ev) => {
-      onChange((ev.target as MathfieldElement).value);
+    mathfield.value = initialValueRef.current;
+    mathfield.addEventListener('input', (event) => {
+      const target = event.target as MathfieldElement;
+      onChangeRef.current(target.value);
     });
 
-    containerRef.current?.replaceChildren(mf);
-    mfRef.current = mf;
+    containerRef.current?.replaceChildren(mathfield);
+    mathfieldRef.current = mathfield;
 
     return () => {
-      mf.remove();
+      mathfield.remove();
+      mathfieldRef.current = null;
     };
   }, []);
 
-  // Update value ketika prop berubah
   useEffect(() => {
-    if (mfRef.current && value !== mfRef.current.value) {
-      mfRef.current.value = value;
+    if (mathfieldRef.current && value !== mathfieldRef.current.value) {
+      mathfieldRef.current.value = value;
     }
   }, [value]);
 

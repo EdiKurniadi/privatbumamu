@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import {
-  Brain,
   Clock,
   BarChart3,
   Target,
@@ -13,14 +12,25 @@ import {
   X
 } from 'lucide-react';
 import type { QuestionResult } from '../types';
-import { sampleQuestions } from '../data/questions';
+
+type StoredProcessedQuestion = {
+  raw?: unknown;
+  vars?: Record<string, number>;
+  processed: {
+    id: number;
+    question: string;
+    answer: number;
+    explanation: string;
+    category: string;
+  };
+};
 
 export default function Statistics() {
   const navigate = useNavigate();
   const [selectedQuestion, setSelectedQuestion] = useState<number | null>(null);
   // Pindahkan pengambilan data ke dalam state sehingga akan di-update saat komponen di-mount
   const [results, setResults] = useState<QuestionResult[]>([]);
-  const [processedQuestions, setProcessedQuestions] = useState<any[]>([]);
+  const [processedQuestions, setProcessedQuestions] = useState<StoredProcessedQuestion[]>([]);
 
   // Ambil data terbaru dari sessionStorage ketika komponen di-mount
   useEffect(() => {
@@ -37,14 +47,14 @@ export default function Statistics() {
   // Calculate statistics
   const totalQuestions = results.length;
   const correctAnswers = results.filter(r => r.isCorrect).length;
-  const accuracy = (correctAnswers / totalQuestions) * 100;
-  const averageTime = results.reduce((acc, curr) => acc + curr.timeSpent, 0) / totalQuestions;
+  const accuracy = totalQuestions > 0 ? (correctAnswers / totalQuestions) * 100 : 0;
+  const averageTime = totalQuestions > 0
+    ? results.reduce((acc, curr) => acc + curr.timeSpent, 0) / totalQuestions
+    : 0;
 
   // Cari detail soal berdasarkan questionId dari processedQuestions
-  const getProcessedQuestionDetails = (questionId: number) => {
-    // Pastikan kita mencari di properti processed.id
-    return processedQuestions.find((q: any) => q.processed.id === questionId);
-  };
+  const getProcessedQuestionDetails = (questionId: number) =>
+    processedQuestions.find((q) => q.processed.id === questionId);
 
   // Hitung statistik per kategori
   const categoryStats = results.reduce((acc, curr) => {
@@ -117,18 +127,7 @@ export default function Statistics() {
       )}
 
       <div className="container mx-auto px-4 py-12">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <div className="flex justify-center mb-4">
-            <BarChart3 className="w-16 h-16 text-indigo-600" />
-          </div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            Hasil Latihanmu
-          </h1>
-          <p className="text-xl text-gray-600">
-            Lihat bagaimana performamu dalam sesi latihan ini
-          </p>
-        </div>
+
 
         {/* Main Stats */}
         <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -225,7 +224,7 @@ export default function Statistics() {
                       >
                         {result.isCorrect ? 'Benar' : 'Salah'}
                       </span>
-                      <span className="text-gray-400">•</span>
+                      <span className="text-gray-400">|</span>
                       <span className="text-gray-600">{result.timeSpent}s</span>
                       
                     </div>
@@ -262,7 +261,7 @@ export default function Statistics() {
         {/* Actions */}
         <div className="max-w-4xl mx-auto flex justify-center space-x-4 mb-12">
           <Link
-            to="/"
+            to="/practice-config"
             className="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center space-x-2"
           >
             <span>Latihan Lagi</span>
@@ -273,3 +272,5 @@ export default function Statistics() {
     </div>
   );
 }
+
+

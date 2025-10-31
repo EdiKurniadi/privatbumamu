@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { GraduationCap, Clock, Trophy, History, ArrowRight, Lock, Timer } from 'lucide-react';
+import { GraduationCap, Trophy, History, ArrowRight, Lock, Timer } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { tryoutPackages } from '../data/tryoutPackages';
+import { tryoutPackages } from '../data/tryoutPackages.ts';
 import type { TryoutPackage } from '../types';
 
 // Komponen utama untuk halaman Tryout
@@ -59,18 +59,7 @@ export default function Tryout() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       <div className="container mx-auto px-4 py-8 sm:py-12">
-        {/* Header dengan ikon dan deskripsi */}
-        <div className="text-center mb-8 sm:mb-12">
-          <div className="flex justify-center mb-4">
-            <GraduationCap className="w-12 h-12 sm:w-16 sm:h-16 text-indigo-600" />
-          </div>
-          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3 sm:mb-4">
-            Try Out
-          </h1>
-          <p className="text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto px-4">
-            Uji kemampuanmu dengan simulasi ujian yang mirip dengan kondisi sebenarnya
-          </p>
-        </div>
+
 
         {/* Tab untuk memilih antara paket dan riwayat */}
         <div className="max-w-6xl mx-auto mb-8">
@@ -220,7 +209,7 @@ export default function Tryout() {
                           to={`/tryout/results/${entry.id}`}
                           className="text-indigo-600 hover:text-indigo-700 text-sm"
                         >
-                          Lihat Detail →
+                          Lihat Detail &rarr;
                         </Link>
                       </div>
                     </div>

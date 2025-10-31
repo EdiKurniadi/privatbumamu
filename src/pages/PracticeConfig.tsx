@@ -45,18 +45,7 @@ export default function Welcome() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       <div className="container mx-auto px-4 py-12">
-        {/* Hero Section */}
-        <div className="text-center mb-12">
-          <div className="flex justify-center mb-4">
-            <Brain className="w-16 h-16 text-indigo-600" />
-          </div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            Selamat Datang di bimbel BUMAMU
-          </h1>
-          <p className="text-xl text-gray-600">
-            Atur sesi latihanmu sesuai kebutuhan
-          </p>
-        </div>
+
 
         {/* Configuration Form */}
         <div className="max-w-2xl mx-auto bg-white rounded-xl shadow-lg p-8">

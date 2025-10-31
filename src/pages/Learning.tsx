@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { BookOpen, Play, Clock, ChevronLeft } from 'lucide-react';
-import { Link } from 'react-router-dom';
 import { videoCategories } from '../data/videos';
 import type { Video } from '../types';
 
@@ -15,18 +14,7 @@ export default function Learning() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       <div className="container mx-auto px-4 py-8 sm:py-12">
-        {/* Header */}
-        <div className="text-center mb-8 sm:mb-12">
-          <div className="flex justify-center mb-4">
-            <BookOpen className="w-12 h-12 sm:w-16 sm:h-16 text-indigo-600" />
-          </div>
-          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3 sm:mb-4">
-            Video Pembelajaran
-          </h1>
-          <p className="text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto px-4">
-            Pelajari konsep matematika melalui video pembelajaran yang interaktif
-          </p>
-        </div>
+
 
         <div className="max-w-7xl mx-auto">
           {selectedVideo ? (

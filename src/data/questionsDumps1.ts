@@ -155,12 +155,12 @@ export const sampleQuestions: Question[] = [
     "id": 13,
     "variabel": {
       "FotoPerRol": "[30-40,1]",
-      "RolAwal" : "[1-6,1]"
+      "RolAwal": "[1-6,1]",
       "RolTarget": "[15-25,1]"
     },
     "question": "Sebuah studio fotografi mencetak {FotoPerRol*RolAwal} foto dari {RolAwal} rol film. Jika klien memesan {FotoPerRol*RolTarget} foto dengan ukuran sama, berapa rol film minimal yang harus disiapkan?",
     "answer": "{RolTarget}",
-    "explanation": "Setiap rol menghasilkan {FotoPerRol} foto.\nJumlah rol yang diperlukan = {FotoPesanan} ÷ {FotoPerRol} = {FotoPesanan/FotoPerRol} rol.",
+    "explanation": "Setiap rol menghasilkan {FotoPerRol} foto.\nJumlah rol yang diperlukan = {FotoPesanan} / {FotoPerRol} = {FotoPesanan/FotoPerRol} rol.",
     "category": "Perbandingan Senilai"
   },
   {

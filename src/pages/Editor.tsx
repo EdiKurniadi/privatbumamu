@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { PencilLine, Trash2, Plus, Save, AlertTriangle, X } from 'lucide-react';
+import { PencilLine, Trash2, Save, AlertTriangle, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Question } from '../types';
 import { sampleQuestions } from '../data/questions';
@@ -88,7 +88,7 @@ export default function Editor() {
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Editor Soal Matematika</h1>
           <Link
-            to="/"
+            to="/practice-config"
             className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
           >
             Kembali ke Latihan

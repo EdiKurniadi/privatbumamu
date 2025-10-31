@@ -7,6 +7,12 @@ export type Question = {
   difficulty?: 'mudah' | 'sedang' | 'sulit';
 };
 
+export type QuestionTO = {
+  id: number;
+  text: string;
+  options: Record<string, number>;
+}
+
 export type PracticeConfig = {
   categories: string[];
   timePerQuestion: number;
@@ -53,6 +59,7 @@ export type TryoutPackage = {
   categories: string[];
   price: number;
   isPremium: boolean;
+  questions?: QuestionTO[];
 };
 
 export type TryoutQuestion = {

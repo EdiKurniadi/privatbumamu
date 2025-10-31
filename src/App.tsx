@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Brain, Clock, ArrowRight, Check, X } from 'lucide-react';
 
 type Question = {
@@ -34,21 +34,23 @@ function App() {
   const [timeLeft, setTimeLeft] = useState<number>(60);
   const [timerActive, setTimerActive] = useState<boolean>(true);
 
-  useEffect(() => {
-    if (timeLeft > 0 && timerActive) {
-      const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
-      return () => clearTimeout(timer);
-    } else if (timeLeft === 0) {
-      checkAnswer();
-    }
-  }, [timeLeft, timerActive]);
-
-  const checkAnswer = () => {
+  const checkAnswer = useCallback(() => {
     const correct = Number(userAnswer) === sampleQuestions[currentQuestion].answer;
     setIsCorrect(correct);
     setShowResult(true);
     setTimerActive(false);
-  };
+  }, [currentQuestion, userAnswer]);
+
+  useEffect(() => {
+    if (timeLeft > 0 && timerActive) {
+      const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+
+    if (timeLeft === 0) {
+      checkAnswer();
+    }
+  }, [checkAnswer, timeLeft, timerActive]);
 
   const nextQuestion = () => {
     if (currentQuestion < sampleQuestions.length - 1) {

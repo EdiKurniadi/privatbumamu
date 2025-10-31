@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Brain, Clock, ArrowRight, Check, X, Flag } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import { sampleQuestions } from '../data/questions'; // Pastikan ini adalah array raw question
+import { sampleQuestions } from '../data/questions';
 import type { PracticeConfig, QuestionResult } from '../types';
 
 /* ===============================
@@ -116,7 +116,7 @@ function processQuestion(raw: RawQuestion): ProcessedQuestionWrapper {
 
 // Metode 1: Menghasilkan opsi berdasarkan jawaban benar dengan offset
 const possibleNs = [1000000, 100000, 10000, 1000, 100, 10, 1, 0.1];
-const shuffleArray = (array: any[]) => {
+const shuffleArray = <T,>(array: T[]): T[] => {
   for (let i = array.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [array[i], array[j]] = [array[j], array[i]];
@@ -213,45 +213,58 @@ export default function Practice() {
   const [timerActive, setTimerActive] = useState<boolean>(true);
   const [config, setConfig] = useState<PracticeConfig | null>(null);
   const [filteredQuestions, setFilteredQuestions] = useState<ProcessedQuestionWrapper[]>([]);
-  const [results, setResults] = useState<QuestionResult[]>([]);
   const [startTime, setStartTime] = useState<number>(Date.now());
   const [options, setOptions] = useState<number[]>([]);
   const [showNotification, setShowNotification] = useState<boolean>(false);
+  const [isInitializing, setIsInitializing] = useState(true);
+  const timePerQuestion = config?.timePerQuestion ?? 0;
+  const practiceMode = config?.mode ?? 'santai';
+  const resultsRef = useRef<QuestionResult[]>([]);
 
   useEffect(() => {
     // Reset data latihan sebelumnya
     sessionStorage.removeItem('practiceResults');
     sessionStorage.removeItem('processedQuestions');
-    
+    resultsRef.current = [];
+
     const savedConfig = sessionStorage.getItem("practiceConfig");
     if (!savedConfig) {
+      setIsInitializing(false);
       navigate("/");
       return;
     }
-    const parsedConfig = JSON.parse(savedConfig) as PracticeConfig;
-    setConfig(parsedConfig);
 
-    // Filter soal berdasarkan kategori dan tingkat kesulitan (jika dipilih)
-    let filteredRaw = sampleQuestions.filter((q: RawQuestion) => {
-      const matchCategory = parsedConfig.categories.includes(q.category);
-      const matchDifficulty = parsedConfig.difficulty ? q.level === parsedConfig.difficulty : true;
-      return matchCategory && matchDifficulty;
-    });
+    try {
+      const parsedConfig = JSON.parse(savedConfig) as PracticeConfig;
+      setConfig(parsedConfig);
 
-    // Acak soal yang telah difilter
-    filteredRaw = shuffleArray(filteredRaw);
+      let filteredRaw = sampleQuestions.filter((q: RawQuestion) => {
+        const matchCategory = parsedConfig.categories.includes(q.category);
+        const matchDifficulty = parsedConfig.difficulty ? q.level === parsedConfig.difficulty : true;
+        return matchCategory && matchDifficulty;
+      });
 
-    // Jika numberOfQuestions tidak 0, ambil sejumlah soal sesuai pilihan pengguna
-    if (parsedConfig.numberOfQuestions !== 0) {
-      filteredRaw = filteredRaw.slice(0, parsedConfig.numberOfQuestions);
+      filteredRaw = shuffleArray(filteredRaw);
+
+      if (parsedConfig.numberOfQuestions !== 0) {
+        filteredRaw = filteredRaw.slice(0, parsedConfig.numberOfQuestions);
+      }
+
+      const processed = filteredRaw.map((q: RawQuestion) => processQuestion(q));
+      setFilteredQuestions(processed);
+      sessionStorage.setItem('processedQuestions', JSON.stringify(processed));
+      setTimeLeft(parsedConfig.timePerQuestion * 60);
+      setStartTime(Date.now());
+    } catch (error) {
+      console.error('Failed to parse practice config:', error);
+      navigate("/");
+    } finally {
+      setIsInitializing(false);
     }
+  }, [navigate]);
 
-    const processed = filteredRaw.map((q: RawQuestion) => processQuestion(q));
-    setFilteredQuestions(processed);
-    // Simpan array processed ke sessionStorage dengan nama key 'processedQuestions'
-    sessionStorage.setItem('processedQuestions', JSON.stringify(processed));
-    setTimeLeft(parsedConfig.timePerQuestion * 60);
-    setStartTime(Date.now());
+  const finishPractice = useCallback(() => {
+    navigate("/statistics");
   }, [navigate]);
 
 
@@ -266,69 +279,114 @@ export default function Practice() {
       setOptions(newOptions);
     }
   }, [config, currentQuestionIndex, filteredQuestions]);
-
-  useEffect(() => {
-    if (config?.timePerQuestion === 0) {
-      setTimerActive(false);
+  const nextQuestion = useCallback(() => {
+    const hasNext = currentQuestionIndex < filteredQuestions.length - 1;
+    if (hasNext) {
+      const nextIndex = currentQuestionIndex + 1;
+      setCurrentQuestionIndex(nextIndex);
+      setUserAnswer("");
+      setShowResult(false);
+      if (timePerQuestion !== 0) {
+        setTimeLeft(timePerQuestion * 60);
+        setTimerActive(true);
+      }
+      setStartTime(Date.now());
       return;
     }
-    if (timeLeft > 0 && timerActive) {
-      const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
-      return () => clearTimeout(timer);
-    } else if (timeLeft === 0) {
-      checkAnswer(true);
-    }
-  }, [timeLeft, timerActive]);
 
-  const checkAnswer = (triggeredByTimeOut = false) => {
-    const correct = Number(userAnswer) === filteredQuestions[currentQuestionIndex].processed.answer;
+    finishPractice();
+  }, [currentQuestionIndex, filteredQuestions.length, finishPractice, timePerQuestion]);
+
+  const checkAnswer = useCallback((triggeredByTimeOut = false) => {
+    const wrapper = filteredQuestions[currentQuestionIndex];
+    if (!wrapper) {
+      return;
+    }
+
+    const correct = Number(userAnswer) === wrapper.processed.answer;
     const timeSpent = Math.round((Date.now() - startTime) / 1000);
     setIsCorrect(correct);
     setShowResult(true);
     setTimerActive(false);
     setShowNotification(true);
-    // Tampilkan notifikasi selama 2 detik
+
     setTimeout(() => {
       setShowNotification(false);
-      // Jika mode "serius" dan waktu habis, langsung lanjut ke soal berikutnya
-      if (triggeredByTimeOut && config.mode === 'serius') {
+      if (triggeredByTimeOut && practiceMode === 'serius') {
         nextQuestion();
       }
     }, 2000);
-    setResults(prev => [
-      ...prev,
+
+    const updatedResults = [
+      ...resultsRef.current,
       {
-        questionId: filteredQuestions[currentQuestionIndex].processed.id,
-        category: filteredQuestions[currentQuestionIndex].processed.category,
+        questionId: wrapper.processed.id,
+        category: wrapper.processed.category,
         isCorrect: correct,
         timeSpent,
         userAnswer,
-        correctAnswer: filteredQuestions[currentQuestionIndex].processed.answer
+        correctAnswer: wrapper.processed.answer
       }
-    ]);
-  };
+    ];
+    resultsRef.current = updatedResults;
+    sessionStorage.setItem("practiceResults", JSON.stringify(updatedResults));
+  }, [currentQuestionIndex, filteredQuestions, nextQuestion, practiceMode, startTime, userAnswer]);
 
-  const nextQuestion = () => {
-    if (currentQuestionIndex < filteredQuestions.length - 1) {
-      setCurrentQuestionIndex(currentQuestionIndex + 1);
-      setUserAnswer("");
-      setShowResult(false);
-      if (config?.timePerQuestion !== 0) {
-        setTimeLeft(config.timePerQuestion * 60);
-        setTimerActive(true);
-      }
-      setStartTime(Date.now());
-    } else {
-      finishPractice();
+  useEffect(() => {
+    if (timePerQuestion === 0) {
+      setTimerActive(false);
+      return;
     }
-  };
 
-  const finishPractice = () => {
-    sessionStorage.setItem("practiceResults", JSON.stringify(results));
-    navigate("/statistics");
-  };
+    if (timeLeft > 0 && timerActive) {
+      const timer = setTimeout(() => {
+        setTimeLeft(prev => prev - 1);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
 
-  if (!config || filteredQuestions.length === 0) return null;
+    if (timeLeft === 0) {
+      checkAnswer(true);
+    }
+  }, [checkAnswer, timeLeft, timerActive, timePerQuestion]);
+
+  if (isInitializing) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+        <div className="bg-white rounded-xl shadow-lg px-6 py-4 text-gray-600">
+          Memuat sesi latihan...
+        </div>
+      </div>
+    );
+  }
+
+  if (!config) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+        <div className="bg-white rounded-xl shadow-lg px-6 py-4 text-gray-600">
+          Konfigurasi latihan tidak ditemukan. Silakan kembali dan atur ulang sesi latihan Anda.
+        </div>
+      </div>
+    );
+  }
+
+  if (filteredQuestions.length === 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+        <div className="bg-white rounded-xl shadow-lg px-6 py-8 text-center space-y-4">
+          <p className="text-gray-700">
+            Tidak ada soal yang cocok dengan pengaturan latihan yang dipilih.
+          </p>
+          <button
+            onClick={() => navigate('/practice-config')}
+            className="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+          >
+            Atur Ulang Latihan
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
@@ -412,23 +470,7 @@ export default function Practice() {
 
 
 
-      {/* Hero Section */}
       <div className="container mx-auto px-4 py-12">
-        <div className="text-center mb-16">
-          <div className="flex justify-center mb-4">
-            <Brain className="w-16 h-16 text-indigo-600" />
-          </div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Berlatih Matematika</h1>
-          <p className="text-xl text-gray-600">
-            Tingkatkan kemampuan matematikamu dengan latihan soal interaktif
-          </p>
-          <Link
-            to="/editor"
-            className="inline-block mt-4 px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-          >
-            Kelola Soal
-          </Link>
-        </div>
 
         {/* Practice Section */}
         <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-8">

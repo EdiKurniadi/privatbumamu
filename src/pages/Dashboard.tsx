@@ -6,18 +6,7 @@ export default function Welcome() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       <div className="container mx-auto px-4 py-12">
-        {/* Hero Section */}
-        <div className="text-center mb-16">
-          <div className="flex justify-center mb-4">
-            <Brain className="w-20 h-20 text-indigo-600" />
-          </div>
-          <h1 className="text-5xl font-bold text-gray-900 mb-4">
-            privat bumamu
-          </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Platform pembelajaran untuk mempersiapkan SKD CPNS, SNBT dan Tes Kedinasanmu
-          </p>
-        </div>
+
 
         {/* Main Features Grid */}
         <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">

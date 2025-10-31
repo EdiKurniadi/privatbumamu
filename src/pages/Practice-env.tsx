@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Brain, Clock, ArrowRight, Check, X, Flag } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { sampleQuestions } from '../data/questions';
@@ -17,6 +17,7 @@ export default function Practice() {
   const [results, setResults] = useState<QuestionResult[]>([]);
   const [startTime, setStartTime] = useState<number>(Date.now());
   const [showNotification, setShowNotification] = useState(false);
+  const timePerQuestion = config?.timePerQuestion ?? 0;
 
   useEffect(() => {
     // Get config from sessionStorage
@@ -38,23 +39,9 @@ export default function Practice() {
     // Set initial timer based on config
     setTimeLeft(parsedConfig.timePerQuestion * 60);
     setStartTime(Date.now());
-  }, []);
+  }, [navigate]);
 
-  useEffect(() => {
-    if (config?.timePerQuestion === 0) {
-      setTimerActive(false);
-      return;
-    }
-
-    if (timeLeft > 0 && timerActive) {
-      const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
-      return () => clearTimeout(timer);
-    } else if (timeLeft === 0) {
-      checkAnswer();
-    }
-  }, [timeLeft, timerActive]);
-
-  const checkAnswer = () => {
+  const checkAnswer = useCallback(() => {
     const correct = Number(userAnswer) === filteredQuestions[currentQuestion].answer;
     const timeSpent = Math.round((Date.now() - startTime) / 1000);
     
@@ -77,7 +64,23 @@ export default function Practice() {
       userAnswer,
       correctAnswer: filteredQuestions[currentQuestion].answer
     }]);
-  };
+  }, [currentQuestion, filteredQuestions, startTime, userAnswer]);
+
+  useEffect(() => {
+    if (timePerQuestion === 0) {
+      setTimerActive(false);
+      return;
+    }
+
+    if (timeLeft > 0 && timerActive) {
+      const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+
+    if (timeLeft === 0) {
+      checkAnswer();
+    }
+  }, [checkAnswer, timeLeft, timerActive, timePerQuestion]);
 
   const nextQuestion = () => {
     if (currentQuestion < filteredQuestions.length - 1) {
